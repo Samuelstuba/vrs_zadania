@@ -1,0 +1,12 @@
+Debug/
+Release/
+*.o
+*.d
+*.elf
+*.map
+*.list
+*.bin
+*.hex
+*.zip
+*.rar
+_to_delete/
