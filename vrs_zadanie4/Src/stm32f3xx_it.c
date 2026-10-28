@@ -43,6 +43,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+volatile uint32_t sys_tick_ms = 0;
 
 /* USER CODE END PV */
 
@@ -183,6 +184,7 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
+  sys_tick_ms++;
 
   /* USER CODE END SysTick_IRQn 0 */
   

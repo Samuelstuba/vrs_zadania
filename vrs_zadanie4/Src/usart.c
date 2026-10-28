@@ -190,6 +190,17 @@ void USART2_CheckDmaReception(void)
 	}
 }
 
+/* Returns number of bytes currently occupied in DMA Rx buffer */
+uint16_t USART2_GetDmaBufferOccupied(void)
+{
+	return DMA_USART2_BUFFER_SIZE - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_6);
+}
+
+/* Returns 1 if DMA Tx channel is busy (previous transmission not finished) */
+uint8_t USART2_IsTxBusy(void)
+{
+	return LL_DMA_IsEnabledChannel(DMA1, LL_DMA_CHANNEL_7) ? 1 : 0;
+}
 
 
 

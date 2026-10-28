@@ -41,6 +41,8 @@ void USART2_CheckDmaReception(void);
 void USART2_RegisterCallback(void *callback);
 
 /* USER CODE BEGIN Prototypes */
+uint16_t USART2_GetDmaBufferOccupied(void);
+uint8_t USART2_IsTxBusy(void);
 
 /* USER CODE END Prototypes */
 
