@@ -37,7 +37,12 @@ void USART2_RegisterCallback(void *callback)
 
 /* Space for global variables, if you need them */
 
-	// type global variables here
+/* Position in bufferUSART2dma up to which data has already been processed */
+static volatile uint16_t old_pos = 0;
+
+/* Maximal number of bytes the transmitting side sends at once.
+ * If free space in DMA buffer is lower than this, DMA is restarted from the beginning of buffer. */
+#define USART2_MAX_RX_MSG_LEN	20
 
 
 /* USART2 init function */
@@ -125,6 +130,7 @@ void MX_USART2_UART_Init(void)
 
   /* Enable USART2 peripheral and interrupts*/
 
+  LL_USART_DisableOverrunDetect(USART2);	// overrun must not block reception (USART has to be disabled here)
   LL_USART_EnableIT_IDLE(USART2);
   LL_USART_Enable(USART2);
 }
@@ -151,8 +157,39 @@ void USART2_PutBuffer(uint8_t *buffer, uint8_t length)
  */
 void USART2_CheckDmaReception(void)
 {
-	//type your implementation here
+	if(USART2_ProcessData == 0) return;
+
+	/* Actual position of DMA in buffer (number of already received bytes) */
+	uint16_t pos = DMA_USART2_BUFFER_SIZE - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_6);
+
+	/* Forward new data to callback, byte by byte */
+	while(old_pos < pos)
+	{
+		USART2_ProcessData(bufferUSART2dma[old_pos++]);
+	}
+
+	/* Not enough free space for next message (or buffer is full) -> restart DMA from the beginning of buffer.
+	 * In normal mode DMA stops when buffer is full, so it has to be restarted manually. */
+	if((DMA_USART2_BUFFER_SIZE - pos) < USART2_MAX_RX_MSG_LEN)
+	{
+		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_6);
+
+		/* Byte could arrive between reading pos and disabling channel - do not lose it */
+		pos = DMA_USART2_BUFFER_SIZE - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_6);
+		while(old_pos < pos)
+		{
+			USART2_ProcessData(bufferUSART2dma[old_pos++]);
+		}
+
+		LL_DMA_ClearFlag_GI6(DMA1);
+		LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_6, (uint32_t)bufferUSART2dma);
+		LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_6, DMA_USART2_BUFFER_SIZE);
+		LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_6);
+
+		old_pos = 0;
+	}
 }
+
 
 
 
